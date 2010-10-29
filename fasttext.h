@@ -5,6 +5,7 @@
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <cairo.h>
+#include <cairo-ft.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include "qs/qs.h"
@@ -17,23 +18,23 @@
 #define MAX_TEXT_LEN 255
 #define MAX_FONT_LEN 255
 #define _DEFAULT_FONT_SIZE 12.0
-#define _DEFAULT_THETA 1.0
-#define _DEFAULT_WIDTH 2.0
-#define _DEFAULT_HEIGHT 3.0
-#define _DEFAULT_X 4.0
-#define _DEFAULT_Y 5.0
+#define _DEFAULT_THETA 0.0
+#define _DEFAULT_WIDTH 0
+#define _DEFAULT_HEIGHT 0
+#define _DEFAULT_X 0.0
+#define _DEFAULT_Y 0.0
 
-// default text == black
-#define _DEFAULT_R 3
-#define _DEFAULT_G 4
-#define _DEFAULT_B 6
-#define _DEFAULT_A 0.8
+// default text == opaque black
+#define _DEFAULT_R 0
+#define _DEFAULT_G 0
+#define _DEFAULT_B 0
+#define _DEFAULT_A 1.0
 
-// default text == white
+// default text == transparent white
 #define _DEFAULT_BGR 255
 #define _DEFAULT_BGG 255
 #define _DEFAULT_BGB 255
-#define _DEFAULT_BGA 0.4
+#define _DEFAULT_BGA 0.0
 
 
 // lots of systems define ABS/MIN/MAX/CLAMP, so they get wrapped in ifdefs
@@ -59,14 +60,14 @@ typedef struct
     char * text;
     char * font;
     char * help;
+    char * fmt;
     double  size;
     double  th;    // theta, angle of rotation
-    double  w, h;
+    int  w, h;
     double  x, y;
     int  r, g, b;
-    double a;
     int  bgr, bgg, bgb;
-    double bga;
+    double a, bga;
 } tr_params;
 
 
@@ -79,11 +80,8 @@ typedef struct
 
 char usage[] = "Usage:\n\nYou must use parameters";
 
-/*
-char * qs_value(char * qs, const char * key, int * length);
+int draw(tr_params * render);
 
-char * qs_decode(char * qs);
-*/
 inline double qs2d(char * qs, double def);
 
 inline long qs2l(char * qs, long def);
@@ -94,13 +92,11 @@ int scanfont(char * font_dir, char ** files);
 
 int addfont(char * filepath);
 
-typedef struct stdio_stream stdio_stream_t;
-
-int draw();
-
-static cairo_status_t stdio_write(void *base, const unsigned char *data, unsigned int length);
-
 void show_fonts(struct hash_entry h[]);
+
+int get_params(char * qs, tr_params * render);
+
+void dump_params(tr_params * render);
 
 
 #endif  // __TEXTRENDER_H_

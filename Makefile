@@ -1,4 +1,4 @@
-ALL : hash.o textrender.o
+ALL : fasttext
 
 BGFLAGS := -I/usr/include/freetype2 -I/usr/include/cairo
 
