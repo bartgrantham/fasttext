@@ -82,6 +82,8 @@ char usage[] = "Usage:\n\nYou must use parameters";
 
 int draw(tr_params * render);
 
+static cairo_status_t FCGI_cairo_write_stream (void * in_closure, const unsigned char *data, unsigned int length);
+
 inline double qs2d(char * qs, double def);
 
 inline long qs2l(char * qs, long def);
