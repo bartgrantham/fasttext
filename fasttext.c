@@ -1,14 +1,15 @@
 /*
-- FT_Face * guessfont(const char * family, const char * style) - would probably need faces_byfile, faces_byfamily, faces_bystyle
-- help: "fonts", "usage", "limits", "debug" (spits out parsed params, other system metrics, processing time, only allowable via --debug), "textdebug"
-- help=debug should attempt to draw, but overlay params over the drawn text
+- should I build a: FT_Face * guessfont(const char * family, const char * style) - would probably need faces_byfile, faces_byfamily, faces_bystyle
+- wrap debug text so that it only displays on --debug execution
 - --extra: send back extra data (timing info, etc.) in headers
 - fg/bg = HHH or HHHH or HHHHHH or HHHHHHHH
 - default font?
 - does cairo support gif?  If so I guess bg color is a blend color and the true background is transparent if alpha > 0
 - why can't I output to error until accept is called?
 - how to free/destroy cairo_surface?
-- dump_params should have a static char that it renders the params into
+- how to set fill color?
+- how to text rotation?
+- most of the max params aren't hooked up
 - convert to cairo_show_glyphs(), aka PANGO, the "real" text API in cairo
 */
 
@@ -18,11 +19,10 @@ char default_font_path[] = "/usr/share/fonts/";
 extern char hash_next_magic[];
 
 FT_Library library; 
-struct hash_entry * FTfaces = NULL, * Cfaces = NULL, * faces = NULL;
+struct hash_entry * faces = NULL;
 extern char **environ;
 //cairo_surface_t *surface;
 //cairo_t *cr;
-cairo_text_extents_t extents;
 
 int main(int argc, char ** argv)
 {
@@ -55,10 +55,9 @@ int main(int argc, char ** argv)
 
         get_params(getenv("QUERY_STRING"), &render_params);
 
-        if ( strncmp(render_params.help, "textdebug", 10) == 0 )
+        if ( render_params.help != NULL && (strncmp(render_params.help, "textdebug", 10) == 0) )
         {
-            printf("Content-type: text/html\n\n");
-            dump_params(&render_params);
+            printf("Content-type: text/html\n\n%s", help_text(&render_params));
         }
         else
         {
@@ -161,22 +160,23 @@ static cairo_status_t FCGI_cairo_write_stream (void * in_closure, const unsigned
 int draw(tr_params * render)
 {
     fontface * face;
-    cairo_surface_t *surface;
-    cairo_t *cr;
+    cairo_surface_t * surface;
+    cairo_t * cr;
     cairo_status_t status;
+    cairo_text_extents_t text_extents, help_extents;
+
+    // the help parameter will probably alter the text to draw, so let's check it first
+    if ( render->help != NULL && strncmp(render->help, "debug", sizeof("debug")) != 0 )
+        render->text = help_text(render);
 
     face = hash_get(faces, render->font);
 
-    // XXX smarter version would be to allow for only one parameter to be set, so height
-    // or weight can be clamped by the user
-    if ( render->w != 0 && render->h != 0 )
-        surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, render->w, render->h);
-    else
-    {
-        // determine w/h from font glyphs, create surface appropriately sized, clamped
-        // to maximums in .h
-        surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 640, 480);
-    }
+    if ( render->w == 0 ) {  render->w = 800; } //MIN(text_extents.width, MAX_WIDTH);  }
+    if ( render->h == 0 ) {  render->h = 800; } //MIN(text_extents.height, MAX_HEIGHT);  }
+
+//    cairo_clip_extents(cr, 0, 0, 400, 400);
+
+    surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, render->w, render->h);
     cr = cairo_create(surface);
 
     // XXX if ( bgr != 255 || bgg != 255 || bgb != 255 || bga != 0.0 )
@@ -184,23 +184,44 @@ int draw(tr_params * render)
     // else
     //    fill background with 255/255/255/0.0
 
+    // XXX - set text bg blend color?
+
     // XXX - if face->cface == NULL use default
+
+    cairo_set_font_size(cr, render->size);
+
     cairo_set_font_face(cr, face->cface);
 
-    cairo_set_font_size (cr, render->size);
-
     // XXX set text color
+    cairo_set_source_rgba(cr, 1.0, 0.0, 0.0, 1.0);
 
     // XXX if ( render->x != 0.0 && render->y != 0.0 ) move to x,y, otherwise move y to text height
     cairo_move_to(cr, render->x, render->y);
 
-    // XXX if ( render->th != 0.0 )  set text rotation
+    // XXX if ( render->th != 0.0 )  set text rotation cairo_set_font_matrix 
 
-    cairo_show_text (cr, render->text);
+    cairo_show_text(cr, render->text);
+
+    cairo_text_extents(cr, render->text, &text_extents);
+    fprintf(stderr, "extents: %f, %f", text_extents.height, text_extents.width);
+
+    // if we're set to debug, we'll have attempted a render above, and now we draw a parameters placard
+    if ( render->help != NULL && (strncmp(render->help, "debug", sizeof("debug")) == 0) )
+    {
+        // set font to whatever ends up being the default
+        // half-transparent black fill
+        cairo_set_font_size(cr, 12);
+        cairo_move_to(cr, 0, 12);
+        // text bg color = black
+        // text color = white
+        cairo_show_text(cr, help_text(render));
+    }
 
     status = cairo_surface_write_to_png_stream(surface, FCGI_cairo_write_stream, NULL);
 
 //  free cairo surface
+    cairo_destroy(cr);
+    cairo_surface_destroy(surface);
 }
 
 
@@ -259,6 +280,68 @@ int get_params(char * qs, tr_params * render)
     return 0;
 }
 
+
+char * help_text(tr_params * render)
+{
+    static char help[MAX_HELP_LEN+1];
+    int help_len=0;
+
+    // debug, textdebug
+    if ( strncmp(render->help, "debug", sizeof("debug")) == 0 ||
+         strncmp(render->help, "textdebug", sizeof("textdebug")) == 0 )
+    {
+        if ( strncmp(render->help, "textdebug", sizeof("textdebug")) == 0 )
+            help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "<pre>\n");
+
+        // include: processing time if help == "debug" (rendered), current heap usage, number of calls
+
+        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "help : %s\n", (render->help!=NULL)?render->help:"");
+        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "text : %s\n", (render->text!=NULL)?render->text:"");
+        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "font : %s (%p)\n", (render->font!=NULL)?render->font:"", render->font);
+        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "fmt : %s\n", (render->fmt!=NULL)?render->fmt:"");
+
+        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "size : %f\n", render->size);
+
+        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "w : %d\n", render->w);
+        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "h : %d\n", render->h);
+        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "x : %.2f\n", render->x);
+        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "y : %.2f\n", render->y);
+        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "theta : %.2f\n", render->th);
+
+        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "r : %d\n", render->r);
+        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "g : %d\n", render->g);
+        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "b : %d\n", render->b);
+        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "a : %.2f\n", render->a);
+
+        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "bgr : %d\n", render->bgr);
+        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "bgg : %d\n", render->bgg);
+        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "bgb : %d\n", render->bgb);
+        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "bga : %.2f\n", render->bga);
+
+        if ( strncmp(render->help, "textdebug", sizeof("textdebug")) == 0 )
+            help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "</pre>\n");
+
+        return help;
+    }
+
+    // limits
+    else if ( strncmp(render->help, "limits", sizeof("limits")) == 0 )
+    {
+        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "Max text: %d bytes, ", MAX_TEXT_LEN);
+        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "Max font size: %f pts, ", MAX_FONT_SIZE);
+        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "Max width: %d pixels, ", MAX_WIDTH);
+        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "Max height: %d pixels ", MAX_HEIGHT);
+        return help;
+    }
+
+    // fonts
+    else if ( strncmp(render->help, "fonts", sizeof("fonts")) == 0 )
+    {  return font_example;  }
+
+    return usage;
+}
+
+
 // strtod/strtol don't gracefully handle null pointers, but we also can't know
 // if they succeed unless we check the value of endptr, so to minimize boilerplate
 // for now we use these strange inline contraptions
@@ -281,28 +364,3 @@ inline long qs2l(char * qs, long def)
 }
 
 
-void dump_params(tr_params * render)
-{
-    printf("help : %s<br>\n", (render->help!=NULL)?render->help:"");
-    printf("text : %s<br>\n", (render->text!=NULL)?render->text:"");
-    printf("font : %s : %p<br>\n", (render->font!=NULL)?render->font:"", render->font);
-    printf("fmt : %s<br>\n", (render->fmt!=NULL)?render->fmt:"");
-
-    printf("size : %f<br>\n", render->size);
-
-    printf("w : %d<br>\n", render->w);
-    printf("h : %d<br>\n", render->h);
-    printf("x : %.2f<br>\n", render->x);
-    printf("y : %.2f<br>\n", render->y);
-    printf("theta : %.2f<br>\n", render->th);
-
-    printf("r : %d<br>\n", render->r);
-    printf("g : %d<br>\n", render->g);
-    printf("b : %d<br>\n", render->b);
-    printf("a : %.2f<br>\n", render->a);
-
-    printf("bgr : %d<br>\n", render->bgr);
-    printf("bgg : %d<br>\n", render->bgg);
-    printf("bgb : %d<br>\n", render->bgb);
-    printf("bga : %.2f<br>\n", render->bga);
-}

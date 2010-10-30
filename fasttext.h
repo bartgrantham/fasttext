@@ -17,10 +17,20 @@
 
 #define MAX_TEXT_LEN 255
 #define MAX_FONT_LEN 255
+#define MAX_HELP_LEN 511
+#define MAX_FONT_SIZE 288.0  /* in points; 2 inches  */
+#define MAX_WIDTH 2000
+#define MAX_HEIGHT 2000
+#define DEFAULT_WIDTH 640
+#define DEFAULT_HEIGHT 480
+
+// the following are "parameter" defaults.  Some end up as sentinels (such as w/h) that trigger
+// true default values, which will hopefully be additionally settable via commang-line args
+
 #define _DEFAULT_FONT_SIZE 12.0
 #define _DEFAULT_THETA 0.0
-#define _DEFAULT_WIDTH 0
-#define _DEFAULT_HEIGHT 0
+#define _DEFAULT_WIDTH 0   /* sentinel */
+#define _DEFAULT_HEIGHT 0  /* sentinel */
 #define _DEFAULT_X 0.0
 #define _DEFAULT_Y 0.0
 
@@ -79,8 +89,11 @@ typedef struct
 
 
 char usage[] = "Usage:\n\nYou must use parameters";
+char font_example[] = "1234567890.  The Quick Brown Fox Jumped Over The Lazy Dog.";
 
 int draw(tr_params * render);
+
+int calc_canvas_size(tr_params * render, int * w, int * h);
 
 static cairo_status_t FCGI_cairo_write_stream (void * in_closure, const unsigned char *data, unsigned int length);
 
@@ -98,7 +111,6 @@ void show_fonts(struct hash_entry h[]);
 
 int get_params(char * qs, tr_params * render);
 
-void dump_params(tr_params * render);
-
+char * help_text(tr_params * render);
 
 #endif  // __TEXTRENDER_H_
