@@ -21,8 +21,8 @@ extern char hash_next_magic[];
 FT_Library library; 
 hash_entry * faces = NULL;
 extern char **environ;
-//cairo_surface_t *surface;
-//cairo_t *cr;
+cairo_surface_t * main_surface;
+cairo_t * main_context;
 
 int main(int argc, char ** argv)
 {
@@ -31,8 +31,8 @@ int main(int argc, char ** argv)
     int error, count, i;
 
     tr_params render_params;
-//    surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, 300, 300);
-//    cr = cairo_create(surface);
+    main_surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, MAX_WIDTH, MAX_HEIGHT);
+    main_context = cairo_create(main_surface);
 
     error = FT_Init_FreeType( &library ); 
 
