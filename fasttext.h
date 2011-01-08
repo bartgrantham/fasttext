@@ -11,7 +11,7 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include "qs/qs.h"
-#include "hash/hash.h"
+#include "simplehash/hash.h"
 
 
 #ifndef __TEXTRENDER_H_
