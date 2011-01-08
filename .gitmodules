@@ -1,0 +1,6 @@
+[submodule "qs_parse"]
+	path = qs_parse
+	url = http://www.bartgrantham.com/_projects/qs_parse/.git
+[submodule "simplehash"]
+	path = simplehash
+	url = http://www.bartgrantham.com/_projects/simplehash/.git

@@ -10,7 +10,7 @@
 #include <cairo-ft.h>
 #include <ft2build.h>
 #include FT_FREETYPE_H
-#include "qs/qs.h"
+#include "qs_parse/qs_parse.h"
 #include "simplehash/hash.h"
 
 
