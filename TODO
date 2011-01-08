@@ -1,0 +1,27 @@
+* Instructions for use in README
+* reenable rotation
+* help=...
+    - "usage" - Fix text
+    - "fonts"
+    - "debug" & "textdebug"
+    - "limits"
+* webserver config examples
+    - lighty
+    - mongrel (and mongrel2?)
+    - nginx
+    - apache2
+* Environment vars
+    - ALLOW_DEBUG
+    - EXTRA_HEADERS
+    - DEFAULT_FONT = "..."
+- How to handle newlines correctly? (this is a problem for help texts and user texts)
+- should I build a: FT_Face * guessfont(const char * family, const char * style) - would probably need faces_byfile, faces_byfamily, faces_bystyle
+- stderr doesn't exist until FCGI_Accept() is called the first time, so how do I provide startup logging?
+- Convert to Pango, the "real" text API in Cairo
+--or--
+- Convert to GD:
+    - http://www.libgd.org/Basics
+    - http://www.libgd.org/Reference
+    - http://www.libgd.org/GdFileFormats
+    - http://www.libgd.org/GdIOCtx
+    - http://www.libgd.org/Font

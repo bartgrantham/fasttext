@@ -1,18 +1,3 @@
-/*
-- should I build a: FT_Face * guessfont(const char * family, const char * style) - would probably need faces_byfile, faces_byfamily, faces_bystyle
-- wrap debug text so that it only displays on --debug execution
-- --extra: send back extra data (timing info, etc.) in headers
-- fg/bg = HHH or HHHH or HHHHHH or HHHHHHHH
-- default font?
-- does cairo support gif?  If so I guess bg color is a blend color and the true background is transparent if alpha > 0
-- why can't I output to error until accept is called?
-- how to free/destroy cairo_surface?
-- how to set fill color?
-- how to text rotation?
-- most of the max params aren't hooked up
-- convert to cairo_show_glyphs(), aka PANGO, the "real" text API in cairo
-*/
-
 #include "fasttext.h"
 
 char default_font_path[] = "/usr/share/fonts/";
