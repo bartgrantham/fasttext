@@ -42,16 +42,16 @@ int main(int argc, char ** argv)
                else {  count = scanfont(default_font_path, files);  }
     chdir(path);
 
-    fprintf(stderr, "testo: %d", 1234);
-
-//    show_fonts(faces);
+//    show_fonts(faces);  // add to fastcgi host log
 
     // FCGI loop:
     while(FCGI_Accept() >= 0)
     {
+//        for(i=0;environ[i]!=NULL;i++)  fprintf(stderr, "%s\n", environ[i]);
         bzero(&render_params, sizeof(render_params));
 
-//        fprintf(stderr, "log: %d", 2345);
+//        if ( getenv("OHMYGOD") )
+//            fprintf(stderr, "log: %s\n", getenv("OHMYGOD"));
 
         get_params(getenv("QUERY_STRING"), &render_params);
 
@@ -64,8 +64,6 @@ int main(int argc, char ** argv)
             printf("Content-type: image/png\n\n");
             draw(&render_params);
         }
-
-//        for(i=0;environ[i]!=NULL;i++)  printf("%s<br>\n", environ[i]);
     }
 }
 
@@ -472,5 +470,3 @@ inline long qs2l(char * qs, long def)
     l = strtol(qs, &endptr, 0);
     return (endptr == qs) ? def : l;
 }
-
-
