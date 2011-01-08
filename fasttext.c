@@ -60,7 +60,7 @@ int scanfont(char * font_dir, char ** files)
 
     dir = opendir(font_dir);
     if ( dir == NULL ) {  return count;  }
-//    if ( dir == NULL ) {  perror("opendir");  printf(" %s\n", font_dir);  }
+//    if ( dir == NULL ) {  perror("opendir");  printf(" %s\n", font_dir);  }  // Add to error logging when that's ready
     chdir(font_dir);
     while(entry = readdir(dir))
     {
@@ -108,6 +108,7 @@ int addfont(char * filepath, char * key)
     // why does this generate a warning?
     face->cface = cairo_ft_font_face_create_for_ft_face(*(face->ftface), FT_LOAD_FORCE_AUTOHINT);
 
+// Add to error logging when that's ready
 //    printf("Added \t%s\t%s\t%s\n", strrchr(filepath, '/')+1, (*(face->ftface))->family_name, (*(face->ftface))->style_name);
 
     if ( key != NULL )
