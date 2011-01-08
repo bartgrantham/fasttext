@@ -19,7 +19,7 @@ char default_font_path[] = "/usr/share/fonts/";
 extern char hash_next_magic[];
 
 FT_Library library; 
-struct hash_entry * faces = NULL;
+hash_entry * faces = NULL;
 extern char **environ;
 //cairo_surface_t *surface;
 //cairo_t *cr;
@@ -78,8 +78,9 @@ int scanfont(char * font_dir, char ** files)
     DIR * dir;
 
     dir = opendir(font_dir);
+    if ( dir == NULL ) {  return count;  }
+//    if ( dir == NULL ) {  perror("opendir");  printf(" %s\n", font_dir);  }
     chdir(font_dir);
-    if ( dir == NULL ) {  perror("opendir");  printf(" %s\n", font_dir);  }
     while(entry = readdir(dir))
     {
         if ( entry->d_type == DT_DIR && ! relative_dir(entry) )
@@ -92,18 +93,21 @@ int scanfont(char * font_dir, char ** files)
         {
             getcwd(path, MAXPATHLEN);
             strcat(path, "/");  strcat(path, entry->d_name);  // there's got to be a better way than this...
-            addfont(path);
-            count++;
+            if ( addfont(path, NULL) == 0 )  count++;
         }
     }
     return count;
 }
 
 
-int addfont(char * filepath)
+int addfont(char * filepath, char * key)
 {
     fontface * face;
     int error;
+
+    // we'll only accept font keys of a certain size
+    if ( (key != NULL) && (strlen(key) > MAX_FONT_NAME_LEN) )  return;
+    if ( strlen(strrchr(filepath, '/')+1) > MAX_FONT_NAME_LEN )  return;
 
     face = malloc(sizeof(fontface));
     if ( face == NULL ) {  return ENOMEM;  }
@@ -125,13 +129,16 @@ int addfont(char * filepath)
 
 //    printf("Added \t%s\t%s\t%s\n", strrchr(filepath, '/')+1, (*(face->ftface))->family_name, (*(face->ftface))->style_name);
 
-    hash_set(faces, strrchr(filepath, '/')+1, face);
+    if ( key != NULL )
+        hash_set(faces, key, face);
+    else
+        hash_set(faces, strrchr(filepath, '/')+1, face);
 
     return 0;
 }
 
 
-void show_fonts(struct hash_entry h[])
+void show_fonts(hash_entry h[])
 {
     int i;
     if ( h == NULL ) {  return;  }

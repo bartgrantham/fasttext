@@ -102,9 +102,9 @@ int relative_dir(struct direct *e);
 
 int scanfont(char * font_dir, char ** files);
 
-int addfont(char * filepath);
+int addfont(char * filepath, char * key);
 
-void show_fonts(struct hash_entry h[]);
+void show_fonts(hash_entry h[]);
 
 int get_params(char * qs, tr_params * render);
 
