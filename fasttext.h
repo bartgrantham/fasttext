@@ -1,6 +1,8 @@
 #include "fcgi_stdio.h"
 //#include <stdio.h>
 #include <string.h>
+#include <math.h>
+#include <time.h>
 #include <sys/dir.h>
 #include <sys/param.h>
 #include <sys/errno.h>
