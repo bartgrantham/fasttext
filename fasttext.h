@@ -25,6 +25,7 @@
 // the following are "parameter" defaults.  Some are sentinels
 // that trigger dynamically generated default values
 
+#define _DEFAULT_FONT "__tuffy"
 #define _DEFAULT_FONT_SIZE 12.0
 #define _DEFAULT_THETA 0.0
 #define _DEFAULT_WIDTH 0   /* sentinel */

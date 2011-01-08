@@ -26,6 +26,7 @@ int main(int argc, char ** argv)
     if ( argc > 1 ) {  count = scanfont(argv[1], files);  }
                else {  count = scanfont(default_font_path, files);  }
     chdir(path);
+    addfont("./DEFAULT.ttf", "__DEFAULT__");
 
 //    show_fonts(faces);  // add to fastcgi host log
 
