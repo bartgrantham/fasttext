@@ -36,9 +36,6 @@ int main(int argc, char ** argv)
 //        for(i=0;environ[i]!=NULL;i++)  fprintf(stderr, "%s\n", environ[i]);
         bzero(&render_params, sizeof(render_params));
 
-//        if ( getenv("OHMYGOD") )
-//            fprintf(stderr, "log: %s\n", getenv("OHMYGOD"));
-
         get_params(getenv("QUERY_STRING"), &render_params);
 
         if ( render_params.help != NULL && (strncmp(render_params.help, "textdebug", 10) == 0) )
