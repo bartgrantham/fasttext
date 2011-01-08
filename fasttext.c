@@ -159,77 +159,137 @@ static cairo_status_t FCGI_cairo_write_stream (void * in_closure, const unsigned
 
 int draw(tr_params * render)
 {
-    fontface * face;
-    cairo_surface_t * surface;
-    cairo_t * cr;
+    fontface * face = NULL;
+    cairo_surface_t * sub_surface;
+    cairo_t * sub_context;
     cairo_status_t status;
     cairo_text_extents_t text_extents, help_extents;
+    int stride;
+    cairo_matrix_t matrix;
+    double elapsed;
+#ifdef __linux
+    struct timespec tp_start, tp_end;
+#else
+    clock_t start, end;
+#endif
+
+#ifdef __linux
+    clock_gettime(CLOCK_REALTIME, &tp_start);
+#else
+    start = clock();
+#endif
+
+    if ( render->font != NULL )
+        face = hash_get(faces, render->font);
+    if ( face == NULL )
+        face = hash_get(faces, "__DEFAULT__");
+
+    cairo_set_font_size(main_context, render->size);
+    cairo_set_font_face(main_context, face->cface);
 
     // the help parameter will probably alter the text to draw, so let's check it first
     if ( render->help != NULL && strncmp(render->help, "debug", sizeof("debug")) != 0 )
         render->text = help_text(render);
 
-    face = hash_get(faces, render->font);
+    // how big will the rendered text be?
+    cairo_text_extents(main_context, render->text, &text_extents);
 
-    if ( render->w == 0 ) {  render->w = 800; } //MIN(text_extents.width, MAX_WIDTH);  }
-    if ( render->h == 0 ) {  render->h = 800; } //MIN(text_extents.height, MAX_HEIGHT);  }
+    // we'll might also need to know the extents of the help text
+    if ( render->help != NULL && strncmp(render->help, "debug", sizeof("debug")) == 0 )
+        cairo_text_extents(main_context, help_text(render), &help_extents);
 
-//    cairo_clip_extents(cr, 0, 0, 400, 400);
+    // since Cairo origins it's draw from the lower-left (for l2r text) we have to adjust y
+    if ( render->y == _DEFAULT_Y )
+        render->y = text_extents.height;
 
-    surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, render->w, render->h);
-    cr = cairo_create(surface);
+    // XXX - if helptext, grow render w and h as needed...
+    // 1.016 is a swizzle factor to compensate for the incorrect extents cairo produces
+    if ( render->w == _DEFAULT_WIDTH )
+    {  render->w = ceil(render->x) + ceil(text_extents.width * 1.016);  }
+    if ( render->h == _DEFAULT_HEIGHT )
+    {  render->h = ceil(render->y) + ceil(text_extents.height);  }
 
-    // XXX if ( bgr != 255 || bgg != 255 || bgb != 255 || bga != 0.0 )
-    //    fill background with params
-    // else
-    //    fill background with 255/255/255/0.0
+    stride = cairo_image_surface_get_stride(main_surface);
 
-    // XXX - set text bg blend color?
+    // we know how big the image will be, create our sub_surface from the main_surface
+    sub_surface = cairo_image_surface_create_for_data(cairo_image_surface_get_data(main_surface),
+        CAIRO_FORMAT_ARGB32, render->w, render->h, stride);
+    sub_context = cairo_create(sub_surface);
 
-    // XXX - if face->cface == NULL use default
+    // Remember, this is a new surface that just happens to share the same
+    // buffer as main_surface so we have to set the font size and face for it
+    cairo_set_font_size(sub_context, render->size);
+    cairo_set_font_face(sub_context, face->cface);
 
-    cairo_set_font_size(cr, render->size);
+    // clear the buffer of left-over data
+    cairo_set_operator(sub_context, CAIRO_OPERATOR_CLEAR);
+    cairo_paint(sub_context);
 
-    cairo_set_font_face(cr, face->cface);
+    // And now we're ready to draw!
+    cairo_set_operator(sub_context, CAIRO_OPERATOR_OVER);
 
-    // XXX set text color
-    cairo_set_source_rgba(cr, 1.0, 0.0, 0.0, 1.0);
+    // do we need to show a background color?
+    if ( render->bgr != 0.0 || render->bgg != 0.0 || render->bgb != 0.0 || render->bga != 0.0 )
+    {
+        cairo_set_source_rgba(sub_context, render->bgr, render->bgg, render->bgb, render->bga);
+        cairo_paint_with_alpha(sub_context, render->bga);
+    }
 
-    // XXX if ( render->x != 0.0 && render->y != 0.0 ) move to x,y, otherwise move y to text height
-    cairo_move_to(cr, render->x, render->y);
+    // set text color
+    cairo_set_source_rgba(sub_context, render->r, render->g, render->b, render->a);
 
-    // XXX if ( render->th != 0.0 )  set text rotation cairo_set_font_matrix 
+    cairo_move_to(sub_context, render->x, render->y);
 
-    cairo_show_text(cr, render->text);
+/*
+    if ( render->th != 0.0 )
+    {
+        cairo_get_font_matrix(sub_context, &matrix);
+        cairo_matrix_rotate(&matrix, render->th);
+        cairo_set_font_matrix(sub_context, &matrix);
+    }
+*/
 
-    cairo_text_extents(cr, render->text, &text_extents);
-    fprintf(stderr, "extents: %f, %f", text_extents.height, text_extents.width);
+    cairo_show_text(sub_context, render->text);
 
     // if we're set to debug, we'll have attempted a render above, and now we draw a parameters placard
     if ( render->help != NULL && (strncmp(render->help, "debug", sizeof("debug")) == 0) )
     {
-        // set font to whatever ends up being the default
         // half-transparent black fill
-        cairo_set_font_size(cr, 12);
-        cairo_move_to(cr, 0, 12);
-        // text bg color = black
-        // text color = white
-        cairo_show_text(cr, help_text(render));
+        cairo_set_source_rgba(sub_context, 0, 0, 0, 1.0);
+        cairo_paint_with_alpha(sub_context, 0.5);
+
+        face = hash_get(faces, "__DEFAULT__");
+        cairo_set_font_face(sub_context, face->cface);
+        cairo_set_font_size(sub_context, 12);
+
+        cairo_move_to(sub_context, 0, 12);
+        cairo_set_source_rgba(sub_context, 1, 1, 1, 1.0);
+        cairo_show_text(sub_context, help_text(render));
     }
 
-    status = cairo_surface_write_to_png_stream(surface, FCGI_cairo_write_stream, NULL);
+    status = cairo_surface_write_to_png_stream(sub_surface, FCGI_cairo_write_stream, NULL);
 
-//  free cairo surface
-    cairo_destroy(cr);
-    cairo_surface_destroy(surface);
+    cairo_destroy(sub_context);
+    cairo_surface_destroy(sub_surface);
+
+#ifdef __linux
+    clock_gettime(CLOCK_REALTIME, &tp_end);
+    elapsed = tp_end.tv_sec - tp_start.tv_sec;
+    elapsed += (tp_end.tv_nsec - tp_start.tv_nsec)/1000000000.0;
+#else
+    end = clock();
+    elapsed = ((double) (end - start)) / CLOCKS_PER_SEC;
+#endif
+    fprintf(stderr, "elapsed: %.3fms", elapsed*1000);
 }
 
 
 int get_params(char * qs, tr_params * render)
 {
     static char * kvpairs[256];
-    int i;
+    int i, j;
     char * valptr;
+    double r, g, b, a;
 
     // First we find the locations of all the values in the k/v pairs in the qs
     i = qs_parse(qs, kvpairs, 256);
@@ -241,6 +301,7 @@ int get_params(char * qs, tr_params * render)
     // t / text
     render->text = qs_k2v("t", kvpairs, i);
     if ( render->text == NULL )  render->text = qs_k2v("text", kvpairs, i);
+    if ( strlen(render->text) > MAX_TEXT_LEN ) {  render->text[MAX_TEXT_LEN] = '\0';  }
 
     // f / font
     render->font = qs_k2v("f", kvpairs, i);
@@ -252,7 +313,7 @@ int get_params(char * qs, tr_params * render)
     // s / size
     valptr = qs_k2v("s", kvpairs, i);
     if ( valptr == NULL )  valptr = qs_k2v("size", kvpairs, i);
-    render->size = qs2d(valptr, _DEFAULT_FONT_SIZE);
+    render->size = CLAMP(qs2d(valptr, _DEFAULT_FONT_SIZE), 0.1, MAX_FONT_SIZE);
 
     // th / rot
     valptr = qs_k2v("th", kvpairs, i);
@@ -265,17 +326,35 @@ int get_params(char * qs, tr_params * render)
     render->x = qs2d(qs_k2v("x", kvpairs, i), _DEFAULT_X);
     render->y = qs2d(qs_k2v("y", kvpairs, i), _DEFAULT_Y);
 
-    // r, g, b, a
-    render->r = CLAMP(qs2d(qs_k2v("r", kvpairs, i), _DEFAULT_R), 0, 255);
-    render->g = CLAMP(qs2d(qs_k2v("g", kvpairs, i), _DEFAULT_G), 0, 255);
-    render->b = CLAMP(qs2d(qs_k2v("b", kvpairs, i), _DEFAULT_B), 0, 255);
-    render->a = CLAMP(qs2d(qs_k2v("a", kvpairs, i), _DEFAULT_A), 0.0, 1.0);
+    // fg - NOTE: will override individual r/g/b/a
+    if ( (j = hex2dcolor(qs_k2v("fg", kvpairs, i), &(render->r), &(render->g), &(render->b), &(render->a))) != 0 )
+    {
+        if ( j == 3 || j == 6 )
+            render->a = 1.0;
+    }
+    else
+    {
+        // r, g, b, a
+        render->r = CLAMP(qs2d(qs_k2v("r", kvpairs, i), _DEFAULT_R), 0, 1.0);
+        render->g = CLAMP(qs2d(qs_k2v("g", kvpairs, i), _DEFAULT_G), 0, 1.0);
+        render->b = CLAMP(qs2d(qs_k2v("b", kvpairs, i), _DEFAULT_B), 0, 1.0);
+        render->a = CLAMP(qs2d(qs_k2v("a", kvpairs, i), _DEFAULT_A), 0.0, 1.0);
+    }
 
-    // background r, g, b, a
-    render->bgr = CLAMP(qs2d(qs_k2v("bgr", kvpairs, i), _DEFAULT_BGR), 0, 255);
-    render->bgg = CLAMP(qs2d(qs_k2v("bgg", kvpairs, i), _DEFAULT_BGG), 0, 255);
-    render->bgb = CLAMP(qs2d(qs_k2v("bgb", kvpairs, i), _DEFAULT_BGB), 0, 255);
-    render->bga = CLAMP(qs2d(qs_k2v("bga", kvpairs, i), _DEFAULT_BGA), 0.0, 1.0);
+    // bg - NOTE: will override individual background r/g/b/a
+    if ( (j = hex2dcolor(qs_k2v("bg", kvpairs, i), &(render->bgr), &(render->bgg), &(render->bgb), &(render->bga))) != 0 )
+    {
+        if ( j == 3 || j == 6 )
+            render->bga = 1.0;
+    }
+    else
+    {
+        // background r, g, b, a
+        render->bgr = CLAMP(qs2d(qs_k2v("bgr", kvpairs, i), _DEFAULT_BGR), 0, 1.0);
+        render->bgg = CLAMP(qs2d(qs_k2v("bgg", kvpairs, i), _DEFAULT_BGG), 0, 1.0);
+        render->bgb = CLAMP(qs2d(qs_k2v("bgb", kvpairs, i), _DEFAULT_BGB), 0, 1.0);
+        render->bga = CLAMP(qs2d(qs_k2v("bga", kvpairs, i), _DEFAULT_BGA), 0.0, 1.0);
+    }
 
     return 0;
 }

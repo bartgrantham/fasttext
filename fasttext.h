@@ -16,23 +16,21 @@
 #define __TEXTRENDER_H_
 
 #define MAX_TEXT_LEN 255
-#define MAX_FONT_LEN 255
+#define MAX_FONT_NAME_LEN 255
 #define MAX_HELP_LEN 511
-#define MAX_FONT_SIZE 288.0  /* in points; 2 inches  */
+#define MAX_FONT_SIZE 1440.0  /* in points; 2 inches  */
 #define MAX_WIDTH 2000
 #define MAX_HEIGHT 2000
-#define DEFAULT_WIDTH 640
-#define DEFAULT_HEIGHT 480
 
-// the following are "parameter" defaults.  Some end up as sentinels (such as w/h) that trigger
-// true default values, which will hopefully be additionally settable via commang-line args
+// the following are "parameter" defaults.  Some are sentinels
+// that trigger dynamically generated default values
 
 #define _DEFAULT_FONT_SIZE 12.0
 #define _DEFAULT_THETA 0.0
 #define _DEFAULT_WIDTH 0   /* sentinel */
 #define _DEFAULT_HEIGHT 0  /* sentinel */
 #define _DEFAULT_X 0.0
-#define _DEFAULT_Y 0.0
+#define _DEFAULT_Y 9876.1234 /* sentinel */
 
 // default text == opaque black
 #define _DEFAULT_R 0
@@ -40,10 +38,10 @@
 #define _DEFAULT_B 0
 #define _DEFAULT_A 1.0
 
-// default text == transparent white
-#define _DEFAULT_BGR 255
-#define _DEFAULT_BGG 255
-#define _DEFAULT_BGB 255
+// default text == transparent black
+#define _DEFAULT_BGR 0.0
+#define _DEFAULT_BGG 0.0
+#define _DEFAULT_BGB 0.0
 #define _DEFAULT_BGA 0.0
 
 
@@ -75,9 +73,8 @@ typedef struct
     double  th;    // theta, angle of rotation
     int  w, h;
     double  x, y;
-    int  r, g, b;
-    int  bgr, bgg, bgb;
-    double a, bga;
+    double  r, g, b, a;
+    double  bgr, bgg, bgb, bga;
 } tr_params;
 
 
