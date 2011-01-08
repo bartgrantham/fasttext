@@ -428,6 +428,30 @@ char * help_text(tr_params * render)
 }
 
 
+void text_extents(char * text, double * w, double * h)
+{
+    fontface * face = NULL;
+    cairo_text_extents_t text_extents;
+    double tmp_w, tmp_h;
+
+    face = hash_get(faces, "__DEFAULT__");
+
+    cairo_set_font_face(main_context, face->cface);
+    cairo_set_font_size(main_context, _DEFAULT_FONT_SIZE);
+
+    // will have to keep subtracting from the previous amount to determine
+    // the width of the current "line"
+    while ( text[0] != '\0' )
+    {
+        cairo_text_extents(main_context, text, &text_extents);
+        text += strcspn(text, "\n") + 1;
+    }
+
+    *w = text_extents.width;
+    *h = text_extents.height;
+}
+
+
 // strtod/strtol don't gracefully handle null pointers, but we also can't know
 // if they succeed unless we check the value of endptr, so to minimize boilerplate
 // for now we use these strange inline contraptions
