@@ -28,12 +28,9 @@ int main(int argc, char ** argv)
     chdir(path);
     addfont("./DEFAULT.ttf", "__DEFAULT__");
 
-//    show_fonts(faces);  // add to fastcgi host log
-
     // FCGI loop:
     while(FCGI_Accept() >= 0)
     {
-//        for(i=0;environ[i]!=NULL;i++)  fprintf(stderr, "%s\n", environ[i]);
         bzero(&render_params, sizeof(render_params));
 
         get_params(getenv("QUERY_STRING"), &render_params);
@@ -73,7 +70,7 @@ int scanfont(char * font_dir, char ** files)
         if ( entry->d_type == DT_REG || entry->d_type == DT_LNK )
         {
             getcwd(path, MAXPATHLEN);
-            strcat(path, "/");  strcat(path, entry->d_name);  // there's got to be a better way than this...
+            strcat(path, "/");  strcat(path, entry->d_name);  // inelegant, but works
             if ( addfont(path, NULL) == 0 )  count++;
         }
     }
@@ -191,7 +188,7 @@ int draw(tr_params * render)
     if ( render->y == _DEFAULT_Y )
         render->y = text_extents.height;
 
-    // XXX - if helptext, grow render w and h as needed...
+    // TODO - if helptext, grow render w and h as needed...
     // 1.016 is a swizzle factor to compensate for the incorrect extents cairo produces
     if ( render->w == _DEFAULT_WIDTH )
     {  render->w = ceil(render->x) + ceil(text_extents.width * 1.016);  }
@@ -230,6 +227,7 @@ int draw(tr_params * render)
     cairo_move_to(sub_context, render->x, render->y);
 
 /*
+    // TODO: rotation currently rotates around the upper-left corner, fix to rotate around text center
     if ( render->th != 0.0 )
     {
         cairo_get_font_matrix(sub_context, &matrix);
