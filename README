@@ -7,7 +7,7 @@ Description
 -----------
 fasttext is a FastCGI server, written in C, that takes parameters on the
 HTTP query string and renders text into a png that it serves back through
-the webserver.  It uses libcairo and freetype, supports TrueType font files,
+the webserver.  It uses Cairo2 with Freetype, supports TrueType font files,
 and is about as fast as reasonably possible, the bottleneck in rendering
 being the png compression.  It is intended to be used behind a caching web
 server or proxy, but can be used directly for low-traffic sites.
@@ -96,22 +96,52 @@ http://fasttext.example.com/?f=vb&t=this+is+a+test
 Installation
 ------------
 
-- fastcgi
-- libcairo
+First you'll need to have cairo2 with freetype installed.  Under Ubuntu 10.10
+Server libcairo2-dev includes libfreetype6-dev, so all you need is:
 
-webserver examples (apache2, lighty, nginx)
+# sudo apt-get -y install libcairo2-dev
+
+Next, you'll need FastCGI installed.  Again under Ubuntu 10.10 server:
+
+# sudo apt-get -y install libfcgi-dev
+
+And now you can build the fasttext binary with just:
+
+# make
+
+If you want, you can copy the resulting binary, "fasttext" whereever you
+prefer.  I suggest a directory dedicated to fastcgi binaries at the same
+level as the webserver root.  Don't forget to copy whatever font you'd like
+as the default into DEFAULT.ttf into the same directory.  Otherwise you'll
+get 500 if you don't specify the font face in the query string.  I've
+included Thatcher Ulrich's public domain "Tuffy" as a basic default and you
+may want to change this to whatever your site's default branding font is.  The
+default fonts directory is /usr/share/fonts, but I suggest using an alternative
+directory that has symlinks to the fonts you want to make available for use.
+
+Now you need to setup your webserver.  I like lighttpd, but any webserver that
+supports FastCGI should work.  Here's a lighttpd config example:
+
+$HTTP["host"] == "fasttext.example.com" {
+  server.kbytes-per-second = 1024
+  $HTTP["referer"] !~ ".*example.com" {
+    url.rewrite-once = ( ".*" => "/?t=I will only render for example.com referers" )
+  }
+  url.rewrite-once = ("(\?.*)" => "/$1")
+  fastcgi.server = (
+                     "" =>
+                       ( "" =>
+                         (
+                           "socket" => "/var/run/fastcgi/fasttext.socket",
+                           "bin-path" => "/www/fastcgi/fasttext/fasttext",
+                           "max-procs" => 4
+                         )
+                       )
+                     )
+}
 
 
-
-
-
-
-
-
-
-
-
-
+Now, give it a try at http://fasttext.example.com/?t=Hello,+World!
 
 
 Bugs, etc.

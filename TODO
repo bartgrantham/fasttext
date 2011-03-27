@@ -11,6 +11,8 @@
 
 -- Cache-Control header (or maybe this is best handled by the webserver?)
 
+-- header - X-Rendering-Time: ....
+
 -- reenable rotation
 
 -- help=...
@@ -31,7 +33,9 @@
 -- should I build a: FT_Face * guessfont(const char * family, const char * style) - would probably need faces_byfile, faces_byfamily, faces_bystyle
 
 -- stderr doesn't exist until FCGI_Accept() is called the first time, so how do I provide startup logging?  Or is this just a lighty problem?
+    I can use syslog for logging, but I'd prefer to inline my logging with the webserver's error log.  But does this make sense?
 
+-- Perhaps I should just embed tuffy into the binary so that there's always a default (in case the user forgets to put in a DEFAULT.ttf)
 
 = Rendering enhancements ====
 
