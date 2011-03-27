@@ -2,7 +2,7 @@ ALL : fasttext
 
 BGFLAGS := -I/usr/include/freetype2 -I/usr/include/cairo -lrt
 
-OBJECTS := /usr/lib/libfreetype.so /usr/lib/libcairo.so /usr/local/lib/libfcgi.so hash.o qs_parse.o
+OBJECTS := /usr/lib/libfreetype.so /usr/lib/libcairo.so /usr/lib/libfcgi.so hash.o qs_parse.o
 
 fasttext: fasttext.h fasttext.c $(OBJECTS)
 	$(CC) $(BGFLAGS) $(OBJECTS) fasttext.c -o $@
