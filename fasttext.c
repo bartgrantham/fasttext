@@ -267,7 +267,7 @@ int draw(tr_params * render)
     end = clock();
     elapsed = ((double) (end - start)) / CLOCKS_PER_SEC;
 #endif
-    fprintf(stderr, "elapsed: %.3fms", elapsed*1000);
+//    fprintf(stderr, "elapsed: %.3fms", elapsed*1000);  // logging
 }
 
 
@@ -374,15 +374,15 @@ char * help_text(tr_params * render)
         help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "y : %.2f\n", render->y);
         help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "theta : %.2f\n", render->th);
 
-        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "r : %d\n", render->r);
-        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "g : %d\n", render->g);
-        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "b : %d\n", render->b);
-        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "a : %.2f\n", render->a);
+        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "r : %.3f\n", render->r);
+        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "g : %.3f\n", render->g);
+        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "b : %.3f\n", render->b);
+        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "a : %.3f\n", render->a);
 
-        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "bgr : %d\n", render->bgr);
-        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "bgg : %d\n", render->bgg);
-        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "bgb : %d\n", render->bgb);
-        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "bga : %.2f\n", render->bga);
+        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "bgr : %.3f\n", render->bgr);
+        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "bgg : %.3f\n", render->bgg);
+        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "bgb : %.3f\n", render->bgb);
+        help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "bga : %.3f\n", render->bga);
 
         if ( strncmp(render->help, "textdebug", sizeof("textdebug")) == 0 )
             help_len += snprintf(help+help_len, MAX_HELP_LEN-help_len, "</pre>\n");
