@@ -69,8 +69,8 @@ The server will accept the following parameters:
                          Defaults to transparent black
                          Completely overrides individual bg color parameters
 
-    'br', 'bg', 'bb',  : Individual background color values for red, green, blue,
-    'ba'                 and alpha in decimal 0.0 to 1.0 (clamped if outside range)
+    'bgr', 'bgg'       : Individual background color values for red, green, blue,
+    'bgb', 'bga'         and alpha in decimal 0.0 to 1.0 (clamped if outside range)
                          Defaults to 0.0 for each component
 
 
