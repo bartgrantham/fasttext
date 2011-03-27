@@ -189,9 +189,9 @@ int draw(tr_params * render)
         render->y = text_extents.height;
 
     // TODO - if helptext, grow render w and h as needed...
-    // 1.016 is a swizzle factor to compensate for the incorrect extents cairo produces
+    // 1.06 is a swizzle factor to compensate for the incorrect extents cairo produces
     if ( render->w == _DEFAULT_WIDTH )
-    {  render->w = ceil(render->x) + ceil(text_extents.width * 1.016);  }
+    {  render->w = ceil(render->x) + ceil(text_extents.width * 1.06);  }
     if ( render->h == _DEFAULT_HEIGHT )
     {  render->h = ceil(render->y) + ceil(text_extents.height);  }
 
