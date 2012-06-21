@@ -81,14 +81,14 @@ which the user should refer to the font (ie. "/usr/share/fonts/Vera.ttf"
 is utilized with "f=Vera.ttf").  For this reason I recommend creating
 symlinks for the font files you wish to make available:
 
-# ln -s /usr/share/fonts/Vera.ttf /path/to/fasttext/default/font/dir/v
+    # ln -s /usr/share/fonts/Vera.ttf /path/to/fasttext/default/font/dir/v
 
 This allows for a degree of obfuscation, but more importantly cleans
 up the query string:
 
-http://fasttext.example.com/?f=VeraMoBd.ttf&t=this+is+a+test
+<http://fasttext.example.com/?f=VeraMoBd.ttf&t=this+is+a+test>
 vs.
-http://fasttext.example.com/?f=vb&t=this+is+a+test
+<http://fasttext.example.com/?f=vb&t=this+is+a+test>
 
 
 
@@ -98,15 +98,15 @@ Installation
 First you'll need to have cairo2 with freetype installed.  Under Ubuntu 10.10
 Server libcairo2-dev includes libfreetype6-dev, so all you need is:
 
-# sudo apt-get -y install libcairo2-dev
+    # sudo apt-get -y install libcairo2-dev
 
 Next, you'll need FastCGI installed.  Again under Ubuntu 10.10 server:
 
-# sudo apt-get -y install libfcgi-dev
+    # sudo apt-get -y install libfcgi-dev
 
 And now you can build the fasttext binary with just:
 
-# make
+    # make
 
 If you want, you can copy the resulting binary, "fasttext" whereever you
 prefer.  I suggest a directory dedicated to fastcgi binaries at the same
@@ -121,25 +121,25 @@ directory that has symlinks to the fonts you want to make available for use.
 Now you need to setup your webserver.  I like lighttpd, but any webserver that
 supports FastCGI should work.  Here's a lighttpd config example:
 
-$HTTP["host"] == "fasttext.yourdomain.com" {
-  $HTTP["referer"] !~ ".*yourdomain.com" {
-    url.rewrite-once = ( ".*" => "/?t=I will only render for yourdomain.com referers" )
-  }
-  url.rewrite-once = ("(\?.*)" => "/$1")
-  fastcgi.server = (
-                     "" =>
-                       ( "" =>
-                         (
-                           "socket" => "/var/run/fastcgi/fasttext.socket",
-                           "bin-path" => "/www/fastcgi/fasttext/fasttext",
-                           "max-procs" => 4
+    $HTTP["host"] == "fasttext.yourdomain.com" {
+      $HTTP["referer"] !~ ".*yourdomain.com" {
+        url.rewrite-once = ( ".*" => "/?t=I will only render for yourdomain.com referers" )
+      }
+      url.rewrite-once = ("(\?.*)" => "/$1")
+      fastcgi.server = (
+                         "" =>
+                           ( "" =>
+                             (
+                               "socket" => "/var/run/fastcgi/fasttext.socket",
+                               "bin-path" => "/www/fastcgi/fasttext/fasttext",
+                               "max-procs" => 4
+                             )
+                           )
                          )
-                       )
-                     )
-}
+    }
 
 
-Now, give it a try at http://fasttext.yourdomain.com/?t=Hello,+World!
+Now, give it a try at <http://fasttext.yourdomain.com/?t=Hello,+World!>
 
 
 Bugs, etc.
@@ -164,12 +164,12 @@ enhancements to add.
 License
 -------
 MIT License.  See ./LICENSE or
-http://www.opensource.org/licenses/mit-license.php
+<http://www.opensource.org/licenses/mit-license.php>
 
 Few things are more enjoyable than the knowledge that you've helped another
 person. If you do use these functions for anything, I'd love to hear about it:
 
-bart@bartgrantham.com
+<bart@bartgrantham.com>
 
 
 Enjoy!
