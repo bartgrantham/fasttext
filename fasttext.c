@@ -165,6 +165,12 @@ int draw(tr_params * render)
     start = clock();
 #endif
 
+    if ( render->text == NULL || strlen(render->text) == 0 )
+    {
+        fwrite(nullpng, 1, sizeof(nullpng), stdout);
+        return 0;
+    }
+
     if ( render->font != NULL )
         face = hash_get(faces, render->font);
     if ( face == NULL )
